@@ -71,6 +71,12 @@ async function getSubmittedIds(): Promise<Set<string>> {
 }
 
 export async function GET(req: NextRequest) {
+  // Add CORS headers
+  const response = NextResponse.next();
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   const { searchParams } = new URL(req.url);
   const sfx_id = searchParams.get("sfx_id");
   const music_id = searchParams.get("music_id");
@@ -106,12 +112,34 @@ export async function GET(req: NextRequest) {
     const sfxBuffer = await streamToBuffer(sfxRes.Body);
     const musicBuffer = await streamToBuffer(musicRes.Body);
 
-    return NextResponse.json({
+    // Create response with proper headers
+    const jsonResponse = NextResponse.json({
       sfx: sfxBuffer.toString("base64"),
       music: musicBuffer.toString("base64")
     });
+
+    // Add CORS headers to the response
+    jsonResponse.headers.set('Access-Control-Allow-Origin', '*');
+    jsonResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    jsonResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    jsonResponse.headers.set('Content-Type', 'application/json');
+
+    return jsonResponse;
   } catch (err: any) {
     console.error("S3 Fetch Error:", err);
-    return NextResponse.json({ error: err.message || "Failed to fetch audio" }, { status: 500 });
+    const errorResponse = NextResponse.json({ error: err.message || "Failed to fetch audio" }, { status: 500 });
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    return errorResponse;
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

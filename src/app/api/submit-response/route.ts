@@ -63,7 +63,11 @@ export async function POST(req: NextRequest) {
     const { sfx_id, music_id, timestamp } = body;
 
     if (!sfx_id || !music_id || timestamp === undefined) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      const errorResponse = NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+      errorResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      return errorResponse;
     }
 
     const comboId = `${sfx_id}_${music_id}`;
@@ -74,9 +78,29 @@ export async function POST(req: NextRequest) {
 
     // Update the index
     await updateSubmittedIds(comboId);
-    return NextResponse.json({ message: 'Response submitted successfully' });
+    
+    const successResponse = NextResponse.json({ message: 'Response submitted successfully' });
+    successResponse.headers.set('Access-Control-Allow-Origin', '*');
+    successResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    successResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return successResponse;
   } catch (err: any) {
     console.error('Failed to submit response:', err);
-    return NextResponse.json({ error: 'Failed to submit response' }, { status: 500 });
+    const errorResponse = NextResponse.json({ error: 'Failed to submit response' }, { status: 500 });
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    errorResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return errorResponse;
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 } 

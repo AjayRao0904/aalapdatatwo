@@ -64,13 +64,23 @@ const HomePage = () => {
       if (sfxUrl) URL.revokeObjectURL(sfxUrl);
       if (musicUrl) URL.revokeObjectURL(musicUrl);
       
+      console.log('Fetching audio for pair:', pair);
       const res = await fetch(`/api/audio?sfx_id=${pair.sfx_id}&music_id=${pair.music_id}`);
+      
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'API fetch failed');
       }
 
       const data = await res.json();
+      console.log('Audio data received, length:', {
+        sfx: data.sfx?.length || 0,
+        music: data.music?.length || 0
+      });
+
+      if (!data.sfx || !data.music) {
+        throw new Error('Missing audio data in response');
+      }
 
       // Create blobs with correct MIME types
       const sfxBlob = new Blob(
@@ -82,13 +92,23 @@ const HomePage = () => {
         { type: "audio/wav" } // Music files are .wav
       );
 
-      setSfxUrl(URL.createObjectURL(sfxBlob));
-      setMusicUrl(URL.createObjectURL(musicBlob));
+      console.log('Blobs created:', {
+        sfx: sfxBlob.size,
+        music: musicBlob.size
+      });
+
+      const newSfxUrl = URL.createObjectURL(sfxBlob);
+      const newMusicUrl = URL.createObjectURL(musicBlob);
+
+      setSfxUrl(newSfxUrl);
+      setMusicUrl(newMusicUrl);
       
       // Reset player state
       setSliderValue(0);
       setTimestamp(0);
       setIsPlaying(false);
+      
+      console.log('Audio URLs created successfully');
     } catch (error) {
       console.error("Error fetching audio files:", error);
       setError(error instanceof Error ? error.message : 'Failed to load audio files');

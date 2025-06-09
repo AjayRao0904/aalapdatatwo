@@ -85,15 +85,40 @@ export async function GET() {
         music_id: `music_${id}`
       }));
 
-    return NextResponse.json({
+    const jsonResponse = NextResponse.json({
       pairs: availablePairs,
       total: availablePairs.length
     });
 
+    // Add CORS headers
+    jsonResponse.headers.set('Access-Control-Allow-Origin', '*');
+    jsonResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    jsonResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return jsonResponse;
+
   } catch (err: any) {
     console.error("Error fetching available pairs:", err);
-    return NextResponse.json({ 
+    const errorResponse = NextResponse.json({ 
       error: err.message || "Failed to fetch available pairs" 
     }, { status: 500 });
+    
+    // Add CORS headers to error response
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    errorResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    return errorResponse;
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 } 
