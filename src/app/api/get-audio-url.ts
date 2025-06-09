@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     });
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
     return NextResponse.json({ url });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to generate URL' }, { status: 500 });
   }
 }

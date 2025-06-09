@@ -17,10 +17,10 @@ async function getSubmittedIds(): Promise<Set<string>> {
       Key: "responses/index.json"
     }));
     if (!res.Body) return new Set();
-    const text = await new Response(res.Body as ReadableStream).text();
+    const text = await new Response(res.Body as any).text();
     const arr = JSON.parse(text);
     return new Set(arr);
-  } catch (e) {
+  } catch {
     // If file doesn't exist, treat as empty
     return new Set();
   }
@@ -32,7 +32,7 @@ function extractIdFromKey(key: string): string | null {
   return match ? match[2] : null;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const bucket = process.env.AWS_BUCKET_NAME || "aalapdatatwo";
     

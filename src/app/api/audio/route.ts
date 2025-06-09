@@ -33,7 +33,7 @@ async function streamToBuffer(body: any): Promise<Buffer> {
         chunks.push(chunk);
       }
       return Buffer.concat(chunks);
-    } catch (error) {
+    } catch {
       // If that fails, try to read it as a readable stream
       try {
         const reader = body.getReader();
@@ -44,7 +44,7 @@ async function streamToBuffer(body: any): Promise<Buffer> {
           chunks.push(value);
         }
         return Buffer.concat(chunks);
-      } catch (streamError) {
+      } catch {
         throw new Error('Unable to read S3 response body');
       }
     }
@@ -64,7 +64,7 @@ async function getSubmittedIds(): Promise<Set<string>> {
     const text = await new Response(res.Body as any).text();
     const arr = JSON.parse(text);
     return new Set(arr);
-  } catch (e) {
+  } catch {
     // If file doesn't exist, treat as empty
     return new Set();
   }

@@ -1,7 +1,7 @@
 "use client";
 export const runtime = "nodejs";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 interface AudioPair {
   id: string;
@@ -55,14 +55,7 @@ const HomePage = () => {
     }
   };
 
-  // Fetch audio files when current pair changes
-  useEffect(() => {
-    if (currentPair) {
-      fetchAudioFiles(currentPair);
-    }
-  }, [currentPair]);
-
-  const fetchAudioFiles = async (pair: AudioPair) => {
+  const fetchAudioFiles = useCallback(async (pair: AudioPair) => {
     try {
       setLoading(true);
       setError("");
@@ -102,7 +95,14 @@ const HomePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sfxUrl, musicUrl]);
+
+  // Fetch audio files when current pair changes
+  useEffect(() => {
+    if (currentPair) {
+      fetchAudioFiles(currentPair);
+    }
+  }, [currentPair, fetchAudioFiles]);
 
   // Cleanup blob URLs on unmount
   useEffect(() => {

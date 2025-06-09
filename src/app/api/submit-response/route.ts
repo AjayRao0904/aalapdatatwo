@@ -21,7 +21,7 @@ async function updateSubmittedIds(comboId: string) {
       const text = await new Response(res.Body as any).text();
       ids = JSON.parse(text);
     }
-  } catch (e) {
+  } catch {
     ids = [];
   }
   if (!ids.includes(comboId)) ids.push(comboId);
@@ -43,7 +43,7 @@ async function appendResponseToAllResponses(bucket: string, response: any) {
       const text = await new Response(res.Body as any).text();
       responses = JSON.parse(text);
     }
-  } catch (e) {
+  } catch {
     responses = [];
   }
   responses.push(response);
@@ -75,7 +75,8 @@ export async function POST(req: NextRequest) {
     // Update the index
     await updateSubmittedIds(comboId);
     return NextResponse.json({ message: 'Response submitted successfully' });
-  } catch (error) {
+  } catch (err: any) {
+    console.error('Failed to submit response:', err);
     return NextResponse.json({ error: 'Failed to submit response' }, { status: 500 });
   }
 } 
