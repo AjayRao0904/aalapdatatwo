@@ -16,11 +16,14 @@ export async function GET(req: NextRequest) {
   const id = searchParams.get('id');
 
   if (!type || !id) {
-    return NextResponse.json({ error: 'Missing type or id' }, { status: 400 });
+    const errorResponse = NextResponse.json({ error: 'Missing type or id' }, { status: 400 });
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    return errorResponse;
   }
 
   const folder = type === 'sfx' ? 'sfx_outputs' : 'music_outputs';
-  const key = `${folder}/${id}.mp3`;
+  const extension = type === 'sfx' ? 'mp3' : 'wav'; // Corrected file extension
+  const key = `${folder}/${id}.${extension}`;
 
   try {
     const command = new GetObjectCommand({
@@ -28,8 +31,27 @@ export async function GET(req: NextRequest) {
       Key: key,
     });
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-    return NextResponse.json({ url });
-  } catch {
-    return NextResponse.json({ error: 'Failed to generate URL' }, { status: 500 });
+
+    const jsonResponse = NextResponse.json({ url });
+    jsonResponse.headers.set('Access-Control-Allow-Origin', '*');
+    jsonResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    jsonResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return jsonResponse;
+  } catch (error) {
+    console.error("Error generating signed URL:", error);
+    const errorResponse = NextResponse.json({ error: 'Failed to generate URL' }, { status: 500 });
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    return errorResponse;
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

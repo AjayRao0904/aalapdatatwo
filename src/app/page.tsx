@@ -60,45 +60,33 @@ const HomePage = () => {
       setLoading(true);
       setError("");
       
-      // Cleanup previous blob URLs
-      if (sfxUrl) URL.revokeObjectURL(sfxUrl);
-      if (musicUrl) URL.revokeObjectURL(musicUrl);
+      // Cleanup previous blob URLs (if any were created, though now we'll use direct URLs)
+      if (sfxUrl && sfxUrl.startsWith("blob:")) URL.revokeObjectURL(sfxUrl);
+      if (musicUrl && musicUrl.startsWith("blob:")) URL.revokeObjectURL(musicUrl);
       
-      console.log('Fetching audio for pair:', pair);
-      const res = await fetch(`/api/audio?sfx_id=${pair.sfx_id}&music_id=${pair.music_id}`);
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'API fetch failed');
+      console.log('Fetching signed audio URLs for pair:', pair);
+
+      // Fetch signed URL for SFX
+      const sfxRes = await fetch(`/api/get-audio-url?type=sfx&id=${pair.sfx_id}`);
+      if (!sfxRes.ok) {
+        const errorData = await sfxRes.json();
+        throw new Error(errorData.error || 'Failed to get SFX audio URL');
       }
+      const sfxData = await sfxRes.json();
+      const newSfxUrl = sfxData.url;
 
-      const data = await res.json();
-      console.log('Audio data received, length:', {
-        sfx: data.sfx?.length || 0,
-        music: data.music?.length || 0
-      });
-
-      if (!data.sfx || !data.music) {
-        throw new Error('Missing audio data in response');
+      // Fetch signed URL for Music
+      const musicRes = await fetch(`/api/get-audio-url?type=music&id=${pair.music_id}`);
+      if (!musicRes.ok) {
+        const errorData = await musicRes.json();
+        throw new Error(errorData.error || 'Failed to get Music audio URL');
       }
+      const musicData = await musicRes.json();
+      const newMusicUrl = musicData.url;
 
-      // Create blobs with correct MIME types
-      const sfxBlob = new Blob(
-        [Uint8Array.from(atob(data.sfx), (c) => c.charCodeAt(0))],
-        { type: "audio/mpeg" } // SFX files are .mp3
-      );
-      const musicBlob = new Blob(
-        [Uint8Array.from(atob(data.music), (c) => c.charCodeAt(0))],
-        { type: "audio/wav" } // Music files are .wav
-      );
-
-      console.log('Blobs created:', {
-        sfx: sfxBlob.size,
-        music: musicBlob.size
-      });
-
-      const newSfxUrl = URL.createObjectURL(sfxBlob);
-      const newMusicUrl = URL.createObjectURL(musicBlob);
+      if (!newSfxUrl || !newMusicUrl) {
+        throw new Error('Missing audio URLs in response');
+      }
 
       setSfxUrl(newSfxUrl);
       setMusicUrl(newMusicUrl);
